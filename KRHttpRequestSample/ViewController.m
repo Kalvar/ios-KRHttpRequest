@@ -1,12 +1,34 @@
-## Supports
+//
+//  ViewController.m
+//  KRHttpRequestSample
+//
+//  Created by Kalvar on 13/9/13.
+//  Copyright (c) 2013年 Kuo-Ming Lin. All rights reserved.
+//
 
-KRHttpRequest supports ARC.
+#import "ViewController.h"
+#import "KRHttpRequest.h"
 
-## How To Get Started
+@interface ViewController ()
 
-KRHttpRequest is using simple methods to do HTTP Request as easy quickly, it supports POST, GET, Upload Image.
+@end
 
-``` objective-c
+@implementation ViewController
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+	// Do any additional setup after loading the view, typically from a nib.
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+#pragma --mark Samples
+
 -(void)doPost
 {
     dispatch_queue_t queue = dispatch_queue_create("_doPostQueue", NULL);
@@ -95,12 +117,6 @@ KRHttpRequest is using simple methods to do HTTP Request as easy quickly, it sup
                                   }
                               }];
 }
-```
 
-## Version
 
-KRHttpRequest now is V0.5 beta.
-
-## License
-
-KRHttpRequest is available under the MIT license ( or Whatever you wanna do ). See the LICENSE file for more info.
+@end
