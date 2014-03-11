@@ -365,14 +365,14 @@ const NSString *KRHttpRequestUploadInfoImageParamName = @"param_name";
 }
 
 #pragma --mark Getters
--(NSDictionary *)responseInfo
+-(id)responseInfo
 {
-    NSDictionary *_userInfo = nil;
+    id _userInfo = nil;
     if( _responseData )
     {
-        _userInfo = (NSDictionary *)[NSJSONSerialization JSONObjectWithData:_responseData
-                                                                    options:0
-                                                                      error:nil];
+        _userInfo = [NSJSONSerialization JSONObjectWithData:_responseData
+                                                    options:0
+                                                      error:nil];
     }
     return _userInfo;
 }

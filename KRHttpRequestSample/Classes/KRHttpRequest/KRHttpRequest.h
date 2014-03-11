@@ -26,7 +26,7 @@ extern const NSString *KRHttpRequestUploadInfoImageParamName;
     CGFloat timeoutInterval;
     NSData *responseData;
     NSString *responseString;
-    NSDictionary *responseInfo;
+    id responseInfo;
 }
 
 @property (nonatomic, strong) NSURL *requestURL;
@@ -35,7 +35,7 @@ extern const NSString *KRHttpRequestUploadInfoImageParamName;
 @property (nonatomic, assign) CGFloat timeoutInterval;
 @property (nonatomic, strong) NSData *responseData;
 @property (nonatomic, strong) NSString *responseString;
-@property (nonatomic, strong) NSDictionary *responseInfo;
+@property (nonatomic, strong) id responseInfo;
 @property (nonatomic, copy) void (^completionHandler)(BOOL finished, NSData *responseData);
 @property (nonatomic, copy) void (^errorHandler)(NSError *error);
 
