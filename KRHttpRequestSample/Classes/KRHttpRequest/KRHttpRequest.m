@@ -1,9 +1,9 @@
 //
 //  KRHttpRequest.m
-//  V0.5 Beta
+//  V0.5.1 Beta
 //
 //  Created by Kalvar on 13/7/05.
-//  Copyright (c) 2013年 Kuo-Ming Lin. All rights reserved.
+//  Copyright (c) 2013 - 2014 年 Kuo-Ming Lin. All rights reserved.
 //
 
 #import "KRHttpRequest.h"
@@ -27,14 +27,16 @@ const NSString *KRHttpRequestUploadInfoImageParamName = @"param_name";
 
 -(void)_initWithVars
 {
-    self.requestURL         = nil;
-    self.requestMethod      = @"GET";
-    self.postParams         = nil;
-    self.timeoutInterval    = 30.0f;
-    self.responseData       = nil;
-    self.responseString     = @"";
-    self.completionHandler  = nil;
-    self.errorHandler       = nil;
+    self.requestURL           = nil;
+    self.requestMethod        = @"GET";
+    self.postParams           = nil;
+    self.timeoutInterval      = 30.0f;
+    self.responseData         = nil;
+    self.responseString       = @"";
+    self.completionHandler    = nil;
+    self.decodeCompletion     = nil;
+    self.errorHandler         = nil;
+    
 }
 
 -(void)_syncUploadImage:(UIImage *)_image imageName:(NSString *)_imageName paramName:(NSString *)_paramName toURL:(NSURL *)_url
@@ -92,9 +94,9 @@ const NSString *KRHttpRequestUploadInfoImageParamName = @"param_name";
 @synthesize responseData   = _responseData;
 @synthesize responseString = _responseString;
 @synthesize responseInfo   = _responseInfo;
-@synthesize completionHandler;
-@synthesize errorHandler;
-
+@synthesize completionHandler = _completionHandler;
+@synthesize decodeCompletion  = _decodeCompletion;
+@synthesize errorHandler      = _errorHandler;
 
 +(KRHttpRequest *)sharedManager
 {
@@ -115,6 +117,22 @@ const NSString *KRHttpRequestUploadInfoImageParamName = @"param_name";
         [self _initWithVars];
     }
     return self;
+}
+
+#pragma --mark Setters
+-(void)setCompletionHandler:(KRHttpRequestCompletionHandler)_theCompletionHandler
+{
+    _completionHandler = _theCompletionHandler;
+}
+
+-(void)setDecodeCompletion:(KRHttpRequestDecodeCompletion)_theDecodeCompletion
+{
+    _decodeCompletion = _theDecodeCompletion;
+}
+
+-(void)setErrorHandler:(KRHttpRequestErrorHandler)_theErrorHandler
+{
+    _errorHandler = _theErrorHandler;
 }
 
 #pragma --mark Request Methods
@@ -188,7 +206,7 @@ const NSString *KRHttpRequestUploadInfoImageParamName = @"param_name";
             [_postData appendData:[@"Content-Type: application/octet-stream\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
             [_postData appendData:[NSData dataWithData:_imageData]];
             [_postData appendData:[[NSString stringWithFormat:@"\r\n--%@--\r\n", boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-        }       
+        }
     }
     [_theRequest setHTTPBody:_postData];
     _responseData   = [NSURLConnection sendSynchronousRequest:_theRequest returningResponse:nil error:nil];
@@ -216,14 +234,14 @@ const NSString *KRHttpRequestUploadInfoImageParamName = @"param_name";
         _paramsString = [[NSMutableString alloc] initWithString:@""];
         __block NSInteger _index = 0;
         [_params enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop)
-        {
-            if( _index > 0 )
-            {
-                [_paramsString appendString:@"&"];
-            }
-            [_paramsString appendFormat:@"%@=%@", key, obj];
-            ++_index;
-        }];
+         {
+             if( _index > 0 )
+             {
+                 [_paramsString appendString:@"&"];
+             }
+             [_paramsString appendFormat:@"%@=%@", key, obj];
+             ++_index;
+         }];
     }
     NSData *_postData = [_paramsString dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
     if( !self.timeoutInterval )
@@ -242,6 +260,18 @@ const NSString *KRHttpRequestUploadInfoImageParamName = @"param_name";
     {
         _completion(YES, _responseData);
     }
+}
+
+-(void)sendPostURL:(NSURL *)_url params:(NSDictionary *)_params decodeCompletion:(KRHttpRequestDecodeCompletion)_completion
+{
+    [self sendPostURL:_url params:_params completion:^(BOOL finished, NSData *responseData)
+     {
+         if( _completion )
+         {
+             //NSLog(@"responseString : %@", self.responseString);
+             _completion(finished, self.responseInfo);
+         }
+     }];
 }
 
 -(void)sendGetURL:(NSURL *)_url params:(NSDictionary *)_params completion:(KRHttpRequestCompletionHandler)_completion
@@ -288,6 +318,17 @@ const NSString *KRHttpRequestUploadInfoImageParamName = @"param_name";
     {
         _completion(YES, _responseData);
     }
+}
+
+-(void)sendGetURL:(NSURL *)_url params:(NSDictionary *)_params decodeCompletion:(KRHttpRequestDecodeCompletion)_completion
+{
+    [self sendGetURL:_url params:_params completion:^(BOOL finished, NSData *responseData)
+     {
+         if( _completion )
+         {
+             _completion(finished, self.responseInfo);
+         }
+     }];
 }
 
 #pragma --mark Uploader Methods
@@ -338,30 +379,41 @@ const NSString *KRHttpRequestUploadInfoImageParamName = @"param_name";
 }
 
 #pragma --mark Parse Methods
--(NSDictionary *)parseDictionaryWithReceivedData:(NSData *)_theResponseData
+-(id)parse
+{
+    if( !_responseData )
+    {
+        return nil;
+    }
+    return [NSJSONSerialization JSONObjectWithData:_responseData
+                                           options:0
+                                             error:nil];
+}
+
+-(id)parseData:(NSData *)_theResponseData
 {
     if( !_theResponseData )
     {
         return nil;
     }
-    return (NSDictionary *)[NSJSONSerialization JSONObjectWithData:_theResponseData
-                                                           options:0
-                                                             error:nil];
+    return [NSJSONSerialization JSONObjectWithData:_theResponseData
+                                           options:0
+                                             error:nil];
 }
 
--(NSDictionary *)parseDictionaryWithCurrentReceivedData
+-(NSDictionary *)parseToDictionary
 {
-   return [self parseDictionaryWithReceivedData:_responseData];
+    return [self parseData:_responseData];
 }
 
--(NSString *)praseStringWithReceivedData:(NSData *)_theResponseData
+-(NSString *)praseToStringWithData:(NSData *)_theResponseData
 {
     return [[NSString alloc] initWithData:_theResponseData encoding:NSUTF8StringEncoding];
 }
 
--(NSString *)parseStringWithCurrentReceivedData
+-(NSString *)parseToString
 {
-    return [self praseStringWithReceivedData:_responseData];
+    return [self praseToStringWithData:_responseData];
 }
 
 #pragma --mark Getters
@@ -376,5 +428,6 @@ const NSString *KRHttpRequestUploadInfoImageParamName = @"param_name";
     }
     return _userInfo;
 }
+
 
 @end

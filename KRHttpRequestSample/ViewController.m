@@ -3,7 +3,7 @@
 //  KRHttpRequestSample
 //
 //  Created by Kalvar on 13/9/13.
-//  Copyright (c) 2013年 Kuo-Ming Lin. All rights reserved.
+//  Copyright (c) 2013 - 2014 年 Kuo-Ming Lin. All rights reserved.
 //
 
 #import "ViewController.h"
